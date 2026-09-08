@@ -1,0 +1,351 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Store configuration (key/value). Seeded with production defaults; editable
+// in the admin dashboard.
+// ---------------------------------------------------------------------------
+model Setting {
+  key   String @id
+  value String
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String    @default("")
+  position    Int       @default(0)
+  products    Product[]
+}
+
+// Editorial collections (e.g. "Aurum Heritage", "Solitaire Edit"). Distinct
+// from categories: a product sits in ONE category but can belong to a
+// collection story.
+model Collection {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  tagline     String    @default("")
+  description String    @default("")
+  imageUrl    String?
+  position    Int       @default(0)
+  active      Boolean   @default(true)
+  products    Product[]
+}
+
+model Product {
+  id               String         @id @default(cuid())
+  name             String
+  slug             String         @unique
+  shortDescription String         @default("")
+  description      String         @default("")
+  priceCents       Int // poisha; 100 = ৳1
+  compareAtCents   Int?
+  // Jewelry specifics
+  material         String         @default("") // e.g. "22K gold", "925 sterling silver"
+  purity           String         @default("") // e.g. "22K", "18K", "925"
+  gemstone         String         @default("") // e.g. "Natural diamond (VS1)", "None"
+  dimensions       String         @default("") // e.g. "Chain length 45 cm, adjustable"
+  careInstructions String         @default("")
+  weightGrams      Float?
+  // Merchandising flags
+  featured         Boolean        @default(false)
+  isNewArrival     Boolean        @default(false)
+  isBestSeller     Boolean        @default(false)
+  madeToOrder      Boolean        @default(false)
+  active           Boolean        @default(true)
+  allowBackorder   Boolean        @default(false)
+  // SEO
+  seoTitle         String?
+  seoDescription   String?
+  categoryId       String?
+  category         Category?      @relation(fields: [categoryId], references: [id])
+  collectionId     String?
+  collection       Collection?    @relation(fields: [collectionId], references: [id])
+  variants         Variant[]
+  images           ProductImage[]
+  reviews          Review[]
+  wishlistItems    WishlistItem[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String  @default("")
+  position  Int     @default(0)
+}
+
+// A product variant (metal tone / size combination) owns its own stock.
+// `stock` is decremented atomically at order creation and restored when an
+// order is cancelled, fails, or is returned/refunded.
+model Variant {
+  id              String      @id @default(cuid())
+  productId       String
+  product         Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku             String      @unique
+  optionName      String
+  color           String? // metal tone: Yellow Gold, White Gold, Rose Gold…
+  size            String? // ring size, chain length, bangle size…
+  materialOption  String?
+  priceDeltaCents Int         @default(0)
+  weightGrams     Float?
+  stock           Int         @default(0)
+  active          Boolean     @default(true)
+  cartItems       CartItem[]
+}
+
+model Customer {
+  id            String           @id @default(cuid())
+  email         String           @unique
+  passwordHash  String
+  name          String
+  phone         String?
+  role          String           @default("CUSTOMER") // CUSTOMER | ADMIN
+  sessions      Session[]
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+  wishlistItems WishlistItem[]
+  carts         Cart[]
+  resetTokens   PasswordResetToken[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model Session {
+  id         String   @id // SHA-256 of the opaque session token
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}
+
+// Single-use, time-limited password reset tokens (stored hashed).
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  fullName   String
+  line1      String
+  line2      String?
+  area       String? // e.g. Gulshan, Dhanmondi
+  city       String
+  region     String // division, e.g. Dhaka
+  postalCode String
+  country    String   @default("BD") // ISO 3166-1 alpha-2
+  phone      String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+// The cart is looked up by an opaque cookie token. After login the cart is
+// attached to the customer (merging any previous customer cart).
+model Cart {
+  id         String     @id @default(cuid())
+  token      String     @unique
+  customerId String?
+  customer   Customer?  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items      CartItem[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int
+  createdAt DateTime @default(now())
+
+  @@unique([cartId, variantId])
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+}
+
+// Order status state machine (Bangladesh-first lifecycle):
+//   PENDING            -> PAYMENT_PENDING | PAID | PROCESSING | CANCELLED | FAILED
+//   PAYMENT_PENDING    -> PAID | CANCELLED | FAILED
+//   PAID               -> PROCESSING | CANCELLED | REFUNDED
+//   PROCESSING         -> PACKED | CANCELLED | REFUNDED
+//   PACKED             -> SHIPPED | CANCELLED | REFUNDED
+//   SHIPPED            -> OUT_FOR_DELIVERY | RETURN_REQUESTED | REFUNDED
+//   OUT_FOR_DELIVERY   -> DELIVERED | RETURN_REQUESTED
+//   DELIVERED          -> RETURN_REQUESTED | REFUNDED
+//   RETURN_REQUESTED   -> RETURNED | DELIVERED (request declined)
+//   RETURNED           -> REFUNDED
+//   CANCELLED, REFUNDED, FAILED are terminal.
+// Stock is reserved (decremented) when the order is created and restored if
+// the order ends in CANCELLED / FAILED / RETURNED / REFUNDED.
+model Order {
+  id                  String      @id @default(cuid())
+  number              String      @unique
+  customerId          String?
+  customer            Customer?   @relation(fields: [customerId], references: [id])
+  email               String
+  status              String      @default("PENDING")
+  paymentStatus       String      @default("PENDING") // PENDING | PAID | FAILED | REFUNDED
+  // Opaque token that lets a GUEST follow their order (sent in confirmation
+  // and shown once after checkout). Signed-in owners can always access.
+  accessToken         String      @unique
+  subtotalCents       Int
+  shippingCents       Int
+  taxCents            Int
+  discountCents       Int         @default(0)
+  totalCents          Int
+  currency            String      @default("BDT")
+  couponCode          String?
+  deliveryZone        String      @default("INSIDE_DHAKA") // INSIDE_DHAKA | OUTSIDE_DHAKA
+  shippingMethod      String      @default("STANDARD") // STANDARD | EXPRESS
+  paymentMethod       String      // COD | BKASH | NAGAD | CARD | BANK_TRANSFER
+  paymentTxnId        String? // bKash/Nagad transaction id, or Stripe session id
+  paymentRef          String?
+  paidAt              DateTime?
+  processingAt        DateTime?
+  packedAt            DateTime?
+  shippedAt           DateTime?
+  outForDeliveryAt    DateTime?
+  deliveredAt         DateTime?
+  cancelledAt         DateTime?
+  refundedAt          DateTime?
+  returnRequestedAt   DateTime?
+  returnedAt          DateTime?
+  failedAt            DateTime?
+  trackingNumber      String?
+  carrier             String?
+  customerNote        String?
+  restocked           Boolean     @default(false)
+  shipFullName        String
+  shipLine1           String
+  shipLine2           String?
+  shipArea            String?
+  shipCity            String
+  shipRegion          String
+  shipPostalCode      String
+  shipCountry         String      @default("BD")
+  shipPhone           String?
+  items               OrderItem[]
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+}
+
+// Historical line records: product/variant ids are plain strings (no FK) so a
+// product can be retired without breaking past orders.
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String
+  variantId      String?
+  name           String
+  variantName    String?
+  sku            String
+  unitPriceCents Int
+  quantity       Int
+  lineTotalCents Int
+  imageUrl       String?
+}
+
+model Coupon {
+  id               String    @id @default(cuid())
+  code             String    @unique
+  type             String // PERCENT | FIXED
+  value            Int // percent 1-100, or poisha for FIXED
+  minSubtotalCents Int       @default(0)
+  active           Boolean   @default(true)
+  expiresAt        DateTime?
+  usageLimit       Int?
+  usedCount        Int       @default(0)
+}
+
+// Reviews are written only by signed-in customers with a PAID+ order that
+// contains the product (verified purchase). They are held in PENDING until an
+// admin approves them; nothing is ever seeded or fabricated.
+model Review {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId    String?
+  rating     Int
+  title      String
+  body       String
+  status     String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt  DateTime @default(now())
+
+  @@unique([productId, customerId])
+}
+
+// Bespoke / custom jewelry consultation requests submitted from the Bespoke
+// page. No payment is taken here; the maison follows up personally.
+model BespokeRequest {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  phone       String
+  jewelryType String // Ring | Necklace | Bracelet | Earrings | Other
+  budget      String // e.g. "৳50,000 – ৳100,000"
+  timeline    String
+  description String
+  referenceUrl String?
+  status      String    @default("NEW") // NEW | IN_REVIEW | QUOTED | ACCEPTED | DECLINED | CLOSED
+  adminNotes  String    @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model JournalPost {
+  id             String    @id @default(cuid())
+  title          String
+  slug           String    @unique
+  excerpt        String    @default("")
+  body           String    @default("")
+  category       String    @default("Journal") // Care | Styling | Materials | Craftsmanship | Journal
+  coverImage     String?
+  readMinutes    Int       @default(4)
+  published      Boolean   @default(false)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("footer")
+  createdAt DateTime @default(now())
+}

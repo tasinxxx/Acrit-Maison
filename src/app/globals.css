@@ -1,0 +1,295 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Acrit Maison design system.
+   Palette: Warm Ivory #F7F3EC · Charcoal #1B1815 · Muted Antique Gold #B8935F
+   Quiet luxury: generous whitespace, hairline borders, restrained motion.
+--------------------------------------------------------------------------- */
+
+:root {
+  --am-bg: #f7f3ec; /* warm ivory */
+  --am-bg-deep: #efe9df; /* ivory one step deeper */
+  --am-surface: #fffdf9; /* near-white warm surface */
+  --am-ink: #1b1815; /* charcoal */
+  --am-muted: #6e655a; /* warm grey */
+  --am-line: #e5ddd0; /* hairline */
+  --am-line-strong: #d4c9b8;
+  --am-accent: #b8935f; /* muted antique gold */
+  --am-accent-deep: #9a7a4b;
+  --am-accent-ink: #ffffff;
+  --am-accent-soft: #f0e6d6; /* gold-tinted wash */
+  --am-danger: #9c3a2a;
+  --am-danger-soft: #f7e8e4;
+  --am-success: #43684b;
+  --am-success-soft: #e8efe7;
+  --font-display: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-bg: var(--am-bg);
+  --color-bg-deep: var(--am-bg-deep);
+  --color-surface: var(--am-surface);
+  --color-ink: var(--am-ink);
+  --color-muted: var(--am-muted);
+  --color-line: var(--am-line);
+  --color-line-strong: var(--am-line-strong);
+  --color-accent: var(--am-accent);
+  --color-accent-deep: var(--am-accent-deep);
+  --color-accent-ink: var(--am-accent-ink);
+  --color-accent-soft: var(--am-accent-soft);
+  --color-danger: var(--am-danger);
+  --color-danger-soft: var(--am-danger-soft);
+  --color-success: var(--am-success);
+  --color-success-soft: var(--am-success-soft);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--am-bg);
+  color: var(--am-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
+
+/* Editorial eyebrow label */
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--am-accent-deep);
+}
+
+/* Buttons — squared corners, hairline borders, quiet luxury */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0;
+  padding: 0.8rem 1.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, opacity 0.25s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+  min-height: 44px; /* touch target */
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--am-ink);
+  color: var(--am-bg);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--am-accent-deep);
+  color: #fff;
+}
+
+.btn-gold {
+  background: var(--am-accent);
+  color: #fff;
+}
+.btn-gold:hover:not(:disabled) {
+  background: var(--am-accent-deep);
+}
+
+.btn-outline {
+  border-color: var(--am-ink);
+  color: var(--am-ink);
+  background: transparent;
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--am-ink);
+  color: var(--am-bg);
+}
+
+.btn-quiet {
+  border-color: var(--am-line-strong);
+  color: var(--am-ink);
+  background: transparent;
+}
+.btn-quiet:hover:not(:disabled) {
+  border-color: var(--am-ink);
+}
+
+.btn-danger {
+  background: var(--am-danger);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #7f2e21;
+}
+
+/* Inputs */
+.input {
+  width: 100%;
+  border: 1px solid var(--am-line-strong);
+  background: var(--am-surface);
+  border-radius: 0;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.9375rem;
+  color: var(--am-ink);
+  min-height: 44px;
+  transition: border-color 0.2s ease;
+}
+.input::placeholder {
+  color: #a89d8d;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--am-accent);
+  box-shadow: 0 0 0 1px var(--am-accent);
+}
+.input:disabled {
+  background: var(--am-bg-deep);
+  color: var(--am-muted);
+}
+
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231B1815' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  padding-right: 2.4rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--am-muted);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Cards — hairline border, squared, quiet */
+.card {
+  background: var(--am-surface);
+  border: 1px solid var(--am-line);
+}
+.card-hover {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.card-hover:hover {
+  border-color: var(--am-accent);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+.badge-gold {
+  background: var(--am-accent-soft);
+  color: var(--am-accent-deep);
+  border-color: #dcc9a8;
+}
+.badge-dark {
+  background: var(--am-ink);
+  color: var(--am-bg);
+}
+.badge-danger {
+  background: var(--am-danger-soft);
+  color: var(--am-danger);
+  border-color: #e5c4bc;
+}
+.badge-success {
+  background: var(--am-success-soft);
+  color: var(--am-success);
+  border-color: #c3d2c1;
+}
+.badge-neutral {
+  background: var(--am-bg-deep);
+  color: var(--am-muted);
+  border-color: var(--am-line);
+}
+
+/* Hairline section divider */
+.rule {
+  height: 1px;
+  background: var(--am-line);
+  border: 0;
+}
+
+/* Focus visibility for keyboard users */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--am-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--am-accent);
+  color: #fff;
+}
+
+/* Thin elegant scrollbar for drawers/overlays */
+.slim-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.slim-scroll::-webkit-scrollbar-thumb {
+  background: var(--am-line-strong);
+}
+
+/* Reduced motion: kill decorative animation globally */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Underline-on-hover link treatment */
+.link-quiet {
+  position: relative;
+}
+.link-quiet::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+.link-quiet:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
